@@ -23,15 +23,18 @@ class Channel:
         for queue in self.subscriptions:
             queue.put_nowait(message)
 
-    def get_queue(self):
-        """Return the queue"""
+    def get_subscription(self):
+        """Return a subscription object.
+
+        Used internally but also useful to create custom subscriber methods.
+        """
         subscription = Subscription(self)
         self.subscriptions.add(subscription.queue)
         return subscription
 
     def subscribe(self, callback) -> "Subscription":
         """Subscribe to this channel"""
-        subscription = self.get_queue()
+        subscription = self.get_subscription()
         subscription.task = self._loop.create_task(
             self._subscribe(subscription, callback)
         )

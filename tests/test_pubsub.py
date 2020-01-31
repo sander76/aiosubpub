@@ -85,3 +85,22 @@ async def test_channel_unsubscribe_watch(mock_callback):
     subscription_task.cancel()
     await asyncio.sleep(0.1)
     assert len(dummy_channel.subscriptions) == 0
+
+
+@pytest.mark.asyncio
+async def test_custom_subscription(dummy_message):
+    """Test a custom subscription"""
+
+    channel = Channel("dummy channel")
+
+    subscription = channel.get_subscription()
+
+    async def _custom_subscriber():
+        with subscription as sub:
+            result = await sub.get()
+            return result
+
+    channel.publish(dummy_message)
+
+    result = await _custom_subscriber()
+    assert result == dummy_message
