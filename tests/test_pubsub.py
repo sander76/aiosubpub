@@ -3,7 +3,7 @@ import logging
 from unittest.mock import Mock
 import pytest
 
-from pubsub import Channel
+from aiosubpub import Channel
 
 _LOGGER = logging.getLogger(__name__)
 
