@@ -5,7 +5,7 @@ import logging
 import random
 from asyncio import CancelledError
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +16,6 @@ class Channel:
     def __init__(self, name="a channel"):
         self.subscriptions = set()
         self.name = name
-        self._loop = asyncio.get_running_loop()
 
     def publish(self, message):
         """Publish a message on this channel."""
@@ -34,10 +33,9 @@ class Channel:
 
     def subscribe(self, callback) -> "Subscription":
         """Subscribe to this channel"""
+        _loop = asyncio.get_running_loop()
         subscription = self.get_subscription()
-        subscription.task = self._loop.create_task(
-            self._subscribe(subscription, callback)
-        )
+        subscription.task = _loop.create_task(self._subscribe(subscription, callback))
         return subscription
 
     async def _subscribe(self, subscription: "Subscription", callback):
