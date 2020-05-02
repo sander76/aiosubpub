@@ -7,7 +7,7 @@ module = "aiosubpub"
 description-file = "readme.md"
 author = "Sander Teunissen"
 author-email = "no_mail@nomail.com"
-home-page = "https://github.com/sander76/pubsub"
+home-page = "https://github.com/sander76/pypubsub"
 classifiers = ["License :: OSI Approved :: MIT License"]
 requires-python=">=3.7"
 
