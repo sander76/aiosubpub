@@ -5,7 +5,7 @@ import logging
 import random
 from asyncio import CancelledError
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 LOGGER = logging.getLogger(__name__)
 
