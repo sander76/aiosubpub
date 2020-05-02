@@ -3,3 +3,6 @@ venv
 .idea
 *.tar.gz
 *.whl
+.nox
+.coverage
+cov.xml
