@@ -5,7 +5,7 @@ import logging
 import random
 from asyncio import CancelledError
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +64,8 @@ class Subscription:
 
     def unsubscribe(self):
         """Unsubscribe the subscription."""
-        self.task.cancel()
+        if self.task is not None:
+            self.task.cancel()
         self._remove_subscription()
 
     def _remove_subscription(self):

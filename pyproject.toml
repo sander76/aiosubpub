@@ -13,4 +13,4 @@ requires-python=">=3.7"
 
 [tool.flit.metadata.requires-extra]
 test = ["pytest==5.3.5", "pytest-asyncio==0.10.0"]
-dev = ["pytest-cov", "coverage[toml]>=5.0.3", "pre-commit"]
+dev = ["pytest-cov", "coverage[toml]>=5.0.3", "pre-commit","pylint"]
