@@ -5,7 +5,7 @@ import logging
 import random
 from asyncio import CancelledError
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,6 +29,11 @@ class Channel:
         """
         subscription = Subscription(self)
         self.subscriptions.add(subscription.queue)
+        LOGGER.debug(
+            "Subscribing to %s. Total subscribers: %s",
+            self.name,
+            len(self.subscriptions),
+        )
         return subscription
 
     def subscribe(self, callback) -> "Subscription":
@@ -71,6 +76,11 @@ class Subscription:
     def _remove_subscription(self):
         if self.queue in self.hub.subscriptions:
             self.hub.subscriptions.remove(self.queue)
+        LOGGER.debug(
+            "Un-subscribing from channel: %s, subscriber count: %s",
+            self.hub.name,
+            len(self.hub.subscriptions),
+        )
 
     def __enter__(self):
         self.hub.subscriptions.add(self.queue)
@@ -82,7 +92,6 @@ class Subscription:
         return self.queue
 
     def __exit__(self, _type, value, traceback):
-        LOGGER.debug("Un-subscribing from channel: %s", self.hub.name)
         self._remove_subscription()
 
 

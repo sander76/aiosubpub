@@ -33,7 +33,7 @@ async def test_pubsub_callback_success(dummy_message, mock_callback: MockedCallb
     subscription = dummy_channel.subscribe(mock_callback)
 
     dummy_channel.publish(dummy_message)
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.1)
     mock_callback.mock.assert_called_once_with(dummy_message)
     subscription.cancel()
 
