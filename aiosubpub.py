@@ -4,8 +4,10 @@ import asyncio
 import logging
 import random
 from asyncio import CancelledError
+from typing import Any, Optional
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -13,16 +15,16 @@ LOGGER = logging.getLogger(__name__)
 class Channel:
     """A channel to which you can subscribe."""
 
-    def __init__(self, name="a channel"):
-        self.subscriptions = set()
+    def __init__(self, name: str = "a channel"):
+        self.subscriptions: set = set()
         self.name = name
 
-    def publish(self, message):
+    def publish(self, message: Any):
         """Publish a message on this channel."""
         for queue in self.subscriptions:
             queue.put_nowait(message)
 
-    def get_subscription(self):
+    def get_subscription(self) -> "Subscription":
         """Return a subscription object.
 
         Used internally but also useful to create custom subscriber methods.
@@ -58,10 +60,10 @@ class Subscription:
     """Subscription class.
     Used to subscribe to a Channel."""
 
-    def __init__(self, hub):
+    def __init__(self, hub: "Channel"):
         self.hub = hub
         self.queue = asyncio.Queue()
-        self.task = None
+        self.task: Optional[asyncio.Task] = None
 
     def cancel(self):
         """Cancel the subscription. The same as unsubscribe"""
