@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from unittest.mock import Mock
+
 import pytest
 
 from aiosubpub import Channel
@@ -104,3 +105,13 @@ async def test_custom_subscription(dummy_message):
 
     result = await _custom_subscriber()
     assert result == dummy_message
+
+
+@pytest.mark.asyncio
+async def test_get_latest(dummy_message):
+    channel = Channel("dummy channel")
+    channel.publish(dummy_message)
+
+    latest = channel.get_latest()
+
+    assert latest == dummy_message

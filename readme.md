@@ -48,3 +48,8 @@ a_channel.publish("a message")
 
 result = await _custom_subscriber()
 ```
+
+## changelog
+
+### 1.0.10
+- Add `get_latest` to the channel.

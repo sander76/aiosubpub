@@ -1,7 +1,17 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 19.10b0
+    rev: 20.8b1
     hooks:
       - id: black
-        args:
-          - --safe
+        language_version: python3.7
+  - repo: https://github.com/pycqa/isort
+    rev: 5.8.0
+    hooks:
+      - id: isort
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.0
+    hooks:
+      - id: flake8
+        verbose: true
+        additional_dependencies:
+          - pydocstyle==5.0.2

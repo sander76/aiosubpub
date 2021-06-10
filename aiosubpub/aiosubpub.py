@@ -6,7 +6,6 @@ import random
 from asyncio import CancelledError
 from typing import Any, Optional
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -16,11 +15,17 @@ class Channel:
     def __init__(self, name: str = "a channel"):
         self.subscriptions: set = set()
         self.name = name
+        self._last = None
 
     def publish(self, message: Any):
         """Publish a message on this channel."""
+        self._last = message
         for queue in self.subscriptions:
             queue.put_nowait(message)
+
+    def get_latest(self):
+        """Return the last message that was put in the queue."""
+        return self._last
 
     def get_subscription(self) -> "Subscription":
         """Return a subscription object.
