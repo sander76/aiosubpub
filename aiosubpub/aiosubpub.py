@@ -1,39 +1,40 @@
 """Async pubsub implementation."""
+from __future__ import annotations
 
 import asyncio
 import logging
 import random
-from asyncio import CancelledError
-from typing import Any, Optional
+from typing import Callable, Generic, TypeVar
 
 LOGGER = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-class Channel:
+__all__ = ["Channel"]
+
+
+class Channel(Generic[T]):
     """A channel to which you can subscribe."""
 
-    def __init__(self, name: str = "a channel"):
-        self.subscriptions: set = set()
-        self.name = name
-        self._last = None
+    _last: T
 
-    def publish(self, message: Any):
+    def __init__(self, name: str = "a channel"):
+        self.subscriptions: set[Subscription] = set()
+        self.name = name
+
+    def publish(self, message: T):
         """Publish a message on this channel."""
         self._last = message
-        for queue in self.subscriptions:
-            queue.put_nowait(message)
+        for subscription in self.subscriptions:
+            subscription.queue.put_nowait(message)
 
-    def get_latest(self):
+    def get_latest(self) -> T:
         """Return the last message that was put in the queue."""
         return self._last
 
-    def get_subscription(self) -> "Subscription":
-        """Return a subscription object.
-
-        Used internally but also useful to create custom subscriber methods.
-        """
-        subscription = Subscription(self)
-        self.subscriptions.add(subscription.queue)
+    def get_subscription(self) -> Subscription[T]:
+        """Return a subscription object."""
+        subscription = Subscription[T](self)
         LOGGER.debug(
             "Subscribing to %s. Total subscribers: %s",
             self.name,
@@ -41,59 +42,65 @@ class Channel:
         )
         return subscription
 
-    def subscribe(self, callback) -> "Subscription":
+    def subscribe(self, callback: Callable[[T], None]) -> Subscription:
         """Subscribe to this channel"""
-        _loop = asyncio.get_running_loop()
-        subscription = self.get_subscription()
-        subscription.task = _loop.create_task(self._subscribe(subscription, callback))
+        subscription = Subscription[T](self, callback)
         return subscription
 
-    async def _subscribe(self, subscription: "Subscription", callback):
-        try:
-            with subscription as queue:
-                while True:
-                    msg = await queue.get()
-                    callback(msg)
-                    queue.task_done()
-        except CancelledError:
-            LOGGER.debug("Shutting down subscriber")
 
-
-class Subscription:
+class Subscription(Generic[T]):
     """Subscription class.
     Used to subscribe to a Channel."""
 
-    def __init__(self, hub: "Channel"):
-        self.hub = hub
-        self.queue = asyncio.Queue()
-        self.task: Optional[asyncio.Task] = None
+    def __init__(self, channel: Channel, callback: None | Callable[[T], None] = None):
+        """Create a subscription object belonging to a channel.
 
-    def cancel(self):
-        """Cancel the subscription. The same as unsubscribe"""
-        self.unsubscribe()
+        If a callback is provided it will automatically be added as a task to be run when a message
+        is received.
+        """
+        self._channel = channel
+        self._channel.subscriptions.add(self)
+        self.queue: asyncio.Queue = asyncio.Queue()
+        self._callback = callback
+        LOGGER.debug(
+            "Subscription: %s, total subscriptions %i",
+            self._channel.name,
+            len(self._channel.subscriptions),
+        )
+        self.callback_task: asyncio.Task | None = None
+        if callback:
+            self.callback_task = asyncio.create_task(self._subscribe(callback))
 
     def unsubscribe(self):
         """Unsubscribe the subscription."""
-        if self.task is not None:
-            self.task.cancel()
+        if self.callback_task is not None:
+            self.callback_task.cancel()
         self._remove_subscription()
 
+    async def _get_message(self) -> T:
+        msg = await self.queue.get()
+        self.queue.task_done()
+        return msg
+
+    async def _subscribe(self, callback: Callable[[T], None]):
+        try:
+            while True:
+                callback(await self._get_message())
+        except asyncio.CancelledError:
+            LOGGER.debug("Shutting down callback listener.")
+        except Exception as err:
+            LOGGER.exception(err)
+
     def _remove_subscription(self):
-        if self.queue in self.hub.subscriptions:
-            self.hub.subscriptions.remove(self.queue)
+        if self in self._channel.subscriptions:
+            self._channel.subscriptions.remove(self)
         LOGGER.debug(
             "Un-subscribing from channel: %s, subscriber count: %s",
-            self.hub.name,
-            len(self.hub.subscriptions),
+            self._channel.name,
+            len(self._channel.subscriptions),
         )
 
     def __enter__(self):
-        self.hub.subscriptions.add(self.queue)
-        LOGGER.debug(
-            "Subscription: %s, total subscriptions %i",
-            self.hub.name,
-            len(self.hub.subscriptions),
-        )
         return self.queue
 
     def __exit__(self, _type, value, traceback):

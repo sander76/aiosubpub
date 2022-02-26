@@ -6,3 +6,5 @@ venv
 .nox
 .coverage
 cov.xml
+__pycache__
+

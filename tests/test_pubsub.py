@@ -28,21 +28,21 @@ def mock_callback():
 
 
 @pytest.mark.asyncio
-async def test_pubsub_callback_success(dummy_message, mock_callback: MockedCallback):
+async def test_pubsub_callback_success(dummy_message):
     dummy_channel = Channel("dummy channel")
-
+    mock_callback = Mock()
     subscription = dummy_channel.subscribe(mock_callback)
 
     dummy_channel.publish(dummy_message)
     await asyncio.sleep(0.1)
-    mock_callback.mock.assert_called_once_with(dummy_message)
-    subscription.cancel()
+    mock_callback.assert_called_once_with(dummy_message)
+    subscription.unsubscribe()
 
 
 @pytest.mark.asyncio
 async def test_channel_list(mock_callback: MockedCallback):
     """Assert the subscription list is empty when starting a channel"""
-    dummy_channel = Channel("dummy channel")
+    dummy_channel: Channel = Channel("dummy channel")
     assert len(dummy_channel.subscriptions) == 0
 
 
@@ -55,8 +55,8 @@ async def test_channel_subscriptions(mock_callback):
 
     assert len(dummy_channel.subscriptions) == 2
 
-    sub1.cancel()
-    sub2.cancel()
+    sub1.unsubscribe()
+    sub2.unsubscribe()
 
 
 @pytest.mark.asyncio
@@ -66,10 +66,10 @@ async def test_channel_unsubscribe_no_watch(mock_callback):
     This test cancels the subscription before the watching starts.
     """
     dummy_channel = Channel("dummy channel")
-    subscription_task = dummy_channel.subscribe(mock_callback)
+    subscription = dummy_channel.subscribe(mock_callback)
     assert len(dummy_channel.subscriptions) == 1
 
-    subscription_task.cancel()
+    subscription.unsubscribe()
     await asyncio.sleep(0.1)
     assert len(dummy_channel.subscriptions) == 0
 
@@ -83,7 +83,7 @@ async def test_channel_unsubscribe_watch(mock_callback):
     assert len(dummy_channel.subscriptions) == 1
 
     await asyncio.sleep(0.1)
-    subscription_task.cancel()
+    subscription_task.unsubscribe()
     await asyncio.sleep(0.1)
     assert len(dummy_channel.subscriptions) == 0
 

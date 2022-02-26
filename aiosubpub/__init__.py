@@ -1,5 +1,5 @@
 """Aio sub pub package."""
 
-from .aiosubpub import Channel, Subscription  # noqa
+from aiosubpub.aiosubpub import *  # noqa
 
-__version__ = "1.0.10"
+__version__ = "2.0.0"
